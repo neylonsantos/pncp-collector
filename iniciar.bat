@@ -1,34 +1,28 @@
 @echo off
-chcp 65001 >nul
-title PNCP Collector & Analyzer
+title PNCP Collector and Analyzer
 echo ==================================================================
-echo   🚀 PNCP Collector & Analyzer
-echo   Sistema de Captura e Mineração de Editais Governamentais
+echo   PNCP Collector and Analyzer
+echo   Sistema de Captura de Editais Governamentais
 echo ==================================================================
 echo.
 
-:: Verifica se o comando python está no PATH
-where python >nul 2>nul
+where python >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
-    echo [OK] Python localizado. Abrindo navegador...
-    start http://localhost:8000
+    echo [OK] Python encontrado. Iniciando aplicacao...
     python app.py
-    goto end
+    goto :eof
 )
 
-:: Verifica se o iniciador py está disponível
-where py >nul 2>nul
+where py >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
-    echo [OK] Python Launcher localizado. Abrindo navegador...
-    start http://localhost:8000
+    echo [OK] Python Launcher encontrado. Iniciando aplicacao...
     py app.py
-    goto end
+    goto :eof
 )
 
-echo [ERRO] O Python não foi encontrado no seu sistema!
-echo Por favor, instale o Python 3 através de: https://www.python.org/downloads/
-echo (IMPORTANTE: Marque a opção "Add Python to PATH" durante a instalação)
+echo.
+echo [ERRO] Python nao foi encontrado no seu computador!
+echo Instale o Python 3 em: https://www.python.org/downloads/
+echo IMPORTANTE: Marque a caixa "Add Python to PATH" durante a instalacao.
 echo.
 pause
-
-:end
