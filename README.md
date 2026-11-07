@@ -41,27 +41,22 @@ Projetada para pesquisas de mercado, análises setoriais e mineração de dados 
 
 ## 🚀 Como Executar
 
-A aplicação foi desenvolvida em **Python 3 puro** e utiliza Tailwind CSS / Chart.js via CDN. **Não é necessário instalar nenhum pacote via `pip` nem configurar ambiente virtual (`venv`)**!
+A aplicação foi desenvolvida em **Python 3 puro** e utiliza Tailwind CSS / Chart.js via CDN. **Não é necessário instalar nenhum pacote via `pip` nem configurar ambiente virtual (`venv`)**! Funciona de forma 100% nativa no **Windows**, **Linux** e **macOS**.
 
-### Passo 1: Acesse a pasta do projeto
-```bash
-cd ~/src/lab/pncp-collector
-# ou
-cd ~/scr/lab/pncp-collector
-```
+### No Windows:
+- **Opção 1:** Dê dois cliques no arquivo `iniciar.bat`.
+- **Opção 2 (Prompt/PowerShell):**
+  ```cmd
+  python app.py
+  ```
 
-### Passo 2: Inicie o servidor
-Basta executar o script de inicialização:
+### No Linux / macOS:
 ```bash
 ./iniciar.sh
-```
-Ou diretamente com Python:
-```bash
-python3 app.py
+# ou: python3 app.py
 ```
 
-### Passo 3: Acesse no seu navegador
-Abra o navegador em:
+Em qualquer sistema, o navegador abrirá automaticamente em:
 👉 **[http://localhost:8000](http://localhost:8000)**
 
 ---

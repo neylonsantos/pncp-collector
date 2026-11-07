@@ -16,6 +16,7 @@ import threading
 import uuid
 import csv
 import io
+import webbrowser
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 from datetime import datetime
@@ -547,6 +548,16 @@ def run_server(port=PORT):
     print(f"  📂 Pasta do Repositório: {BASE_DIR}")
     print("  Pressione Ctrl+C para encerrar o servidor.")
     print("=" * 65)
+    
+    # Abre o navegador automaticamente em qualquer sistema (Windows, macOS, Linux)
+    def open_browser():
+        time.sleep(0.8)
+        try:
+            webbrowser.open(f"http://localhost:{port}")
+        except Exception:
+            pass
+    threading.Thread(target=open_browser, daemon=True).start()
+
     try:
         server.serve_forever()
     except KeyboardInterrupt:
