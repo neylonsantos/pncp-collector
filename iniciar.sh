@@ -12,7 +12,7 @@ PORT=8000
 
 echo ""
 echo "=================================================================="
-echo "  🚀 PNCP Collector & Analyzer (Mestrado Lab)"
+echo "  🚀 PNCP Collector & Analyzer"
 echo "  Sistema de Captura e Mineração de Editais Governamentais"
 echo "=================================================================="
 echo "  📂 Diretório: $DIR"

@@ -1,8 +1,8 @@
-# 🛡️ PNCP Collector & Analyzer (Mestrado Lab)
+# 🛡️ PNCP Collector & Analyzer
 
 Aplicação web completa e intuitiva desenvolvida para **captura, mineração e análise de editais de compras públicas governamentais** no [Portal Nacional de Contratações Públicas (PNCP)](https://pncp.gov.br) no âmbito da Nova Lei de Licitações (Lei nº 14.133/2021).
 
-Projetada especialmente para pesquisas acadêmicas (dissertações de mestrado e teses de doutorado) nas áreas de **Cibersegurança**, **Segurança da Informação**, **Tecnologia da Informação** e **Governança Pública**.
+Projetada para pesquisas de mercado, análises setoriais e mineração de dados públicos nas áreas de **Cibersegurança**, **Segurança da Informação**, **Tecnologia da Informação** e **Governança Pública**.
 
 ---
 
@@ -105,10 +105,7 @@ Desenvolvido por **[@byneylon](https://neylonsantos.com)** ([neylonsantos.com](h
 
 ---
 
-## 🎓 Dica para a Metodologia do Mestrado
+## 📚 Fonte dos Dados
 
-Para garantir a **reprodutibilidade científica** da sua dissertação:
-1. Registre os parâmetros exatos utilizados na busca (termo `q`, período de datas e data/hora da coleta).
-2. Salve o arquivo `.json` gerado na pasta do seu projeto de pesquisa. Ele contém todos os metadados brutos fornecidos pelo Governo Federal.
-3. Se for citar a fonte dos dados:
-   > BRASIL. Ministério da Gestão e da Inovação em Serviços Públicos. *Portal Nacional de Contratações Públicas (PNCP)*. Dados abertos governamentais estruturados conforme a Lei nº 14.133/2021. Disponível em: <https://pncp.gov.br>. Acesso em: [Data da Coleta].
+Os dados são públicos e coletados diretamente da API do Portal Nacional de Contratações Públicas (PNCP):
+> BRASIL. Ministério da Gestão e da Inovação em Serviços Públicos. *Portal Nacional de Contratações Públicas (PNCP)*. Dados abertos governamentais estruturados conforme a Lei nº 14.133/2021. Disponível em: <https://pncp.gov.br>.
