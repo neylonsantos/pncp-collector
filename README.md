@@ -99,6 +99,12 @@ pncp-collector/
 
 ---
 
+## 👤 Autor
+
+Desenvolvido por **[@byneylon](https://neylonsantos.com)** ([neylonsantos.com](https://neylonsantos.com)).
+
+---
+
 ## 🎓 Dica para a Metodologia do Mestrado
 
 Para garantir a **reprodutibilidade científica** da sua dissertação:
