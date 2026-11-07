@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PNCP Collector & Analyzer | Captura de Dados Governamentais</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); }
+    .dark .glass { background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(12px); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
+
+  <!-- NAVBAR -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 glass">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+          <i data-lucide="database" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            PNCP Collector
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">Mestrado Lab</span>
+          </h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Extrator & Analisador de Editais Governamentais</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <button id="themeToggle" class="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <i data-lucide="moon" id="themeIcon" class="w-5 h-5"></i>
+        </button>
+        <a href="https://pncp.gov.br" target="_blank" rel="noopener noreferrer" class="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 transition">
+          <span>Portal PNCP</span>
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- HERO & SEARCH CARD -->
+    <section class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 space-y-6">
+      <div class="max-w-3xl space-y-2">
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          Captura e Mineração de Editais do Brasil
+        </h2>
+        <p class="text-slate-600 dark:text-slate-400 text-sm sm:text-base leading-relaxed">
+          Pesquise por termos de tecnologia, cibersegurança ou infraestrutura. Baixe grandes volumes com métricas em tempo real e exporte em <span class="font-semibold text-emerald-600 dark:text-emerald-400">JSON</span> e <span class="font-semibold text-emerald-600 dark:text-emerald-400">Planilha Excel (CSV)</span>.
+        </p>
+      </div>
+
+      <!-- PRESET TAGS -->
+      <div class="space-y-2">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          Atalhos de Pesquisa (Clique para preencher):
+        </span>
+        <div class="flex flex-wrap gap-2 pt-1" id="presetsContainer">
+          <button class="preset-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900 border border-emerald-200/60 dark:border-emerald-800/60 transition flex items-center gap-1.5" data-query="cibersegurança OR cybersecurity">
+            <span>🛡️ Cibersegurança</span>
+          </button>
+          <button class="preset-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300 dark:hover:bg-blue-900 border border-blue-200/60 dark:border-blue-800/60 transition flex items-center gap-1.5" data-query="&quot;segurança da informação&quot;">
+            <span>🔒 Segurança da Informação</span>
+          </button>
+          <button class="preset-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900 border border-indigo-200/60 dark:border-indigo-800/60 transition flex items-center gap-1.5" data-query="firewall OR waf OR vpn OR ids">
+            <span>🌐 Redes & Firewall</span>
+          </button>
+          <button class="preset-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 dark:bg-purple-950/60 dark:text-purple-300 dark:hover:bg-purple-900 border border-purple-200/60 dark:border-purple-800/60 transition flex items-center gap-1.5" data-query="software OR &quot;desenvolvimento de software&quot; OR saas">
+            <span>💻 Software & Nuvem</span>
+          </button>
+          <button class="preset-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/60 dark:text-amber-300 dark:hover:bg-amber-900 border border-amber-200/60 dark:border-amber-800/60 transition flex items-center gap-1.5" data-query="servidor OR storage OR datacenter">
+            <span>🖥️ Servidores & Hardware</span>
+          </button>
+          <button class="preset-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border border-slate-300/60 dark:border-slate-700 transition flex items-center gap-1.5" data-query="&quot;tecnologia da informação&quot; OR informatica">
+            <span>🎓 TI em Geral</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN SEARCH FORM -->
+      <form id="searchForm" class="space-y-4">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="relative flex-1">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i data-lucide="search" class="w-5 h-5"></i>
+            </div>
+            <input type="text" id="queryInput" required placeholder="Ex: cibersegurança, &quot;segurança da informação&quot;, firewall, software..." class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition font-medium text-base">
+          </div>
+
+          <button type="submit" id="searchSubmitBtn" class="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold rounded-xl shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition hover:scale-[1.01] active:scale-[0.99]">
+            <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+            <span>Iniciar Captura</span>
+          </button>
+
+          <button type="button" id="cancelBtn" class="hidden px-5 py-3 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2">
+            <i data-lucide="square" class="w-4 h-4 fill-current"></i>
+            <span>Interromper</span>
+          </button>
+        </div>
+
+        <!-- FILTROS AVANÇADOS TOGGLE -->
+        <div>
+          <button type="button" id="toggleFiltersBtn" class="text-xs font-semibold text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center gap-1 transition">
+            <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+            <span>Filtros Avançados (Datas, UF, Esfera, Limite de Registros)</span>
+            <i data-lucide="chevron-down" id="filtersChevron" class="w-3.5 h-3.5 transition-transform duration-200"></i>
+          </button>
+        </div>
+
+        <!-- FILTROS AVANÇADOS COLLAPSIBLE -->
+        <div id="advancedFilters" class="hidden pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Data Inicial -->
+          <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Publicado a partir de:</label>
+            <input type="date" id="dateStart" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-500">
+          </div>
+
+          <!-- Data Final -->
+          <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Publicado até:</label>
+            <input type="date" id="dateEnd" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-500">
+          </div>
+
+          <!-- UF -->
+          <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Estado (UF):</label>
+            <select id="ufSelect" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-500">
+              <option value="">Todos os Estados</option>
+              <option value="AC">Acre (AC)</option>
+              <option value="AL">Alagoas (AL)</option>
+              <option value="AP">Amapá (AP)</option>
+              <option value="AM">Amazonas (AM)</option>
+              <option value="BA">Bahia (BA)</option>
+              <option value="CE">Ceará (CE)</option>
+              <option value="DF">Distrito Federal (DF)</option>
+              <option value="ES">Espírito Santo (ES)</option>
+              <option value="GO">Goiás (GO)</option>
+              <option value="MA">Maranhão (MA)</option>
+              <option value="MT">Mato Grosso (MT)</option>
+              <option value="MS">Mato Grosso do Sul (MS)</option>
+              <option value="MG">Minas Gerais (MG)</option>
+              <option value="PA">Pará (PA)</option>
+              <option value="PB">Paraíba (PB)</option>
+              <option value="PR">Paraná (PR)</option>
+              <option value="PE">Pernambuco (PE)</option>
+              <option value="PI">Piauí (PI)</option>
+              <option value="RJ">Rio de Janeiro (RJ)</option>
+              <option value="RN">Rio Grande do Norte (RN)</option>
+              <option value="RS">Rio Grande do Sul (RS)</option>
+              <option value="RO">Rondônia (RO)</option>
+              <option value="RR">Roraima (RR)</option>
+              <option value="SC">Santa Catarina (SC)</option>
+              <option value="SP">São Paulo (SP)</option>
+              <option value="SE">Sergipe (SE)</option>
+              <option value="TO">Tocantins (TO)</option>
+            </select>
+          </div>
+
+          <!-- Esfera -->
+          <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Esfera Governamental:</label>
+            <select id="esferaSelect" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-500">
+              <option value="">Todas as Esferas</option>
+              <option value="Federal">Federal</option>
+              <option value="Estadual">Estadual</option>
+              <option value="Municipal">Municipal</option>
+            </select>
+          </div>
+
+          <!-- Limite Máximo -->
+          <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Limite Máximo de Editais:</label>
+            <select id="maxRecordsSelect" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-500">
+              <option value="0">Todos Disponíveis (Até o limite do índice)</option>
+              <option value="100">100 editais (Amostra rápida)</option>
+              <option value="500">500 editais</option>
+              <option value="1000">1.000 editais</option>
+              <option value="2500">2.500 editais</option>
+              <option value="5000">5.000 editais</option>
+            </select>
+          </div>
+
+          <!-- Status do Edital -->
+          <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Status da Licitação:</label>
+            <select id="statusSelect" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-500">
+              <option value="">Todos os Editais (Histórico Completo)</option>
+              <option value="recebendo_proposta">Apenas com Propostas em Aberto</option>
+            </select>
+          </div>
+
+          <!-- Opção Aprofundada: Itens Detalhados -->
+          <div class="sm:col-span-2 flex items-center pt-5">
+            <label class="relative flex items-center gap-3 cursor-pointer select-none">
+              <input type="checkbox" id="includeItemsCheckbox" class="sr-only peer">
+              <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+              <div>
+                <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 block">Baixar Itens Detalhados de cada Edital</span>
+                <span class="text-[11px] text-slate-400 block leading-tight">Consulta cada compra individualmente para extrair descrição de cada item, quantidade e valor unitário. (Recomendado para amostras menores)</span>
+              </div>
+            </label>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- LIVE PROGRESS SECTION -->
+    <section id="progressSection" class="hidden bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 p-6 space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span class="relative flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+            Captura em Andamento...
+          </h3>
+          <p id="progressStatusText" class="text-xs text-slate-500 dark:text-slate-400">Iniciando conexão com a API do PNCP...</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4 text-xs font-medium">
+          <!-- Cronômetro -->
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+            <i data-lucide="clock" class="w-4 h-4 text-emerald-600"></i>
+            <span>Tempo:</span>
+            <span id="elapsedDisplay" class="font-bold font-mono">00:00</span>
+          </div>
+
+          <!-- Velocidade -->
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+            <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
+            <span>Velocidade:</span>
+            <span id="speedDisplay" class="font-bold font-mono">0 editais/s</span>
+          </div>
+
+          <!-- ETA -->
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+            <i data-lucide="hourglass" class="w-4 h-4 text-blue-500"></i>
+            <span>Restante (ETA):</span>
+            <span id="etaDisplay" class="font-bold font-mono">Calculando...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROGRESS BAR -->
+      <div class="space-y-1.5">
+        <div class="flex justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
+          <span id="counterProgress">Coletados: 0 / 0</span>
+          <span id="percentProgress">0%</span>
+        </div>
+        <div class="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div id="progressBar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-300 w-0"></div>
+        </div>
+      </div>
+
+      <!-- LOG DRAWER TOGGLE -->
+      <div class="pt-2">
+        <button id="toggleLogsBtn" class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 flex items-center gap-1">
+          <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+          <span>Exibir terminal de logs técnicos</span>
+        </button>
+        <div id="logConsole" class="hidden mt-2 p-3 bg-slate-950 text-emerald-400 font-mono text-xs rounded-xl h-32 overflow-y-auto space-y-1">
+          <!-- Logs inseridos dinamicamente -->
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULTS & DASHBOARD SECTION -->
+    <section id="resultsSection" class="hidden space-y-6">
+
+      <!-- TOP METRIC CARDS -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Total Editais -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total de Editais</p>
+            <h4 id="statTotal" class="text-2xl font-black text-slate-900 dark:text-white mt-1">0</h4>
+            <p class="text-[11px] text-emerald-600 mt-0.5" id="statSubTotal">100% capturado</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center">
+            <i data-lucide="file-text" class="w-6 h-6"></i>
+          </div>
+        </div>
+
+        <!-- Volume Financeiro -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Volume Financeiro Total</p>
+            <h4 id="statValor" class="text-2xl font-black text-slate-900 dark:text-white mt-1">R$ 0,00</h4>
+            <p class="text-[11px] text-slate-400 mt-0.5">Soma estimada das compras</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center">
+            <i data-lucide="coins" class="w-6 h-6"></i>
+          </div>
+        </div>
+
+        <!-- Tempo Gasto -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tempo Total de Coleta</p>
+            <h4 id="statTempo" class="text-2xl font-black text-slate-900 dark:text-white mt-1">0.0s</h4>
+            <p class="text-[11px] text-slate-400 mt-0.5" id="statSpeed">0 editais/s</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center">
+            <i data-lucide="timer" class="w-6 h-6"></i>
+          </div>
+        </div>
+
+        <!-- Estados Alcançados -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Estados (UFs)</p>
+            <h4 id="statUfs" class="text-2xl font-black text-slate-900 dark:text-white mt-1">0</h4>
+            <p class="text-[11px] text-slate-400 mt-0.5">Abrangência nacional</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 flex items-center justify-center">
+            <i data-lucide="map-pin" class="w-6 h-6"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXPORT ACTIONS BAR -->
+      <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl p-6 shadow-md flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h4 class="text-lg font-bold flex items-center gap-2">
+            <i data-lucide="download" class="w-5 h-5 text-emerald-400"></i>
+            Exportar Conjunto de Dados para Dissertação / Pesquisa
+          </h4>
+          <p class="text-xs text-slate-300 mt-1">
+            Arquivos prontos para análise em Python (Pandas/Jupyter), R, SPSS ou Microsoft Excel.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <a id="btnDownloadJson" href="#" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm shadow-md transition flex items-center gap-2">
+            <i data-lucide="file-code" class="w-4 h-4"></i>
+            <span>Baixar JSON Completo</span>
+          </a>
+
+          <a id="btnDownloadCsv" href="#" class="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-semibold text-sm shadow-md transition flex items-center gap-2">
+            <i data-lucide="table" class="w-4 h-4 text-emerald-600"></i>
+            <span>Baixar Planilha Excel (CSV)</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Esferas Donut -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+          <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="pie-chart" class="w-4 h-4 text-emerald-600"></i>
+            Distribuição por Esfera Governamental
+          </h4>
+          <div class="h-64 relative flex items-center justify-center">
+            <canvas id="esferaChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Top UFs Bar -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+          <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-600"></i>
+            Top Estados (UFs) com mais Compras
+          </h4>
+          <div class="h-64 relative flex items-center justify-center">
+            <canvas id="ufsChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- DATA TABLE -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden space-y-4">
+        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h4 class="text-base font-bold text-slate-900 dark:text-white">Explorador de Editais Encontrados</h4>
+            <p class="text-xs text-slate-500">Exibindo compras coletadas. Clique para ver itens ou arquivos.</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <div class="relative">
+              <input type="text" id="tableFilterInput" placeholder="Filtrar tabela..." class="pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+              <i data-lucide="filter" class="w-3.5 h-3.5 absolute left-2.5 top-2 text-slate-400"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-50/75 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 text-slate-500 font-semibold uppercase tracking-wider">
+                <th class="py-3 px-4">Data Pub.</th>
+                <th class="py-3 px-4">Órgão / UF</th>
+                <th class="py-3 px-4">Esfera</th>
+                <th class="py-3 px-4">Modalidade</th>
+                <th class="py-3 px-4 max-w-xs">Objeto</th>
+                <th class="py-3 px-4">Valor Estimado</th>
+                <th class="py-3 px-4 text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody" class="divide-y divide-slate-100 dark:divide-slate-800">
+              <!-- Linhas geradas via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- TABLE PAGINATION -->
+        <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+          <span id="tableShowingText">Mostrando 0 de 0</span>
+          <div class="flex items-center space-x-2">
+            <button id="tablePrevBtn" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50">Anterior</button>
+            <span id="tablePageText" class="font-medium">1</span>
+            <button id="tableNextBtn" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50">Próxima</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: ITENS DETALHADOS -->
+  <div id="modalItens" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="package" class="w-5 h-5 text-emerald-600"></i>
+            Itens Específicos da Licitação
+          </h3>
+          <p id="modalItensSubtitle" class="text-xs text-slate-500 mt-0.5"></p>
+        </div>
+        <button onclick="closeModal('modalItens')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto flex-1 space-y-4" id="modalItensContent">
+        <div class="flex items-center justify-center py-12 text-slate-400">
+          <i data-lucide="loader-2" class="w-8 h-8 animate-spin"></i>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+        <button onclick="closeModal('modalItens')" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-medium text-xs rounded-xl">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ARQUIVOS / PDFS -->
+  <div id="modalArquivos" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="paperclip" class="w-5 h-5 text-blue-600"></i>
+            Documentos e Anexos do Edital
+          </h3>
+          <p id="modalArquivosSubtitle" class="text-xs text-slate-500 mt-0.5"></p>
+        </div>
+        <button onclick="closeModal('modalArquivos')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto flex-1 space-y-3" id="modalArquivosContent">
+        <div class="flex items-center justify-center py-12 text-slate-400">
+          <i data-lucide="loader-2" class="w-8 h-8 animate-spin"></i>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+        <button onclick="closeModal('modalArquivos')" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-medium text-xs rounded-xl">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: OBJETO COMPLETO -->
+  <div id="modalObjeto" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white" id="modalObjetoTitulo">Objeto da Compra</h3>
+        <button onclick="closeModal('modalObjeto')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto" id="modalObjetoTexto"></div>
+      <div class="flex justify-end">
+        <button onclick="closeModal('modalObjeto')" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs rounded-xl">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    // State
+    let currentEventSource = null;
+    let stopwatchInterval = null;
+    let searchStartTime = 0;
+    let currentCacheId = null;
+    let allDatasetItems = [];
+    let tableCurrentPage = 1;
+    const tablePageSize = 10;
+    let filteredTableItems = [];
+
+    // Charts instances
+    let esferaChart = null;
+    let ufsChart = null;
+
+    // Initialize Icons
+    lucide.createIcons();
+
+    // Dark Mode Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+      themeIcon.setAttribute('data-lucide', 'sun');
+    }
+    themeToggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+      lucide.createIcons();
+      if (esferaChart) renderCharts();
+    });
+
+    // Preset Buttons
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('queryInput').value = btn.dataset.query;
+        document.getElementById('queryInput').focus();
+      });
+    });
+
+    // Toggle Advanced Filters
+    const toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
+    const advancedFilters = document.getElementById('advancedFilters');
+    const filtersChevron = document.getElementById('filtersChevron');
+    toggleFiltersBtn.addEventListener('click', () => {
+      advancedFilters.classList.toggle('hidden');
+      filtersChevron.classList.toggle('rotate-180');
+    });
+
+    // Toggle Logs
+    const toggleLogsBtn = document.getElementById('toggleLogsBtn');
+    const logConsole = document.getElementById('logConsole');
+    toggleLogsBtn.addEventListener('click', () => {
+      logConsole.classList.toggle('hidden');
+    });
+
+    function addLog(msg, level = 'info') {
+      const p = document.createElement('p');
+      const time = new Date().toLocaleTimeString();
+      let color = 'text-emerald-400';
+      if (level === 'warn') color = 'text-amber-400';
+      if (level === 'error') color = 'text-rose-400';
+      p.className = color;
+      p.textContent = `[${time}] ${msg}`;
+      logConsole.appendChild(p);
+      logConsole.scrollTop = logConsole.scrollHeight;
+    }
+
+    // Modal helpers
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    // Format Currency
+    function formatBRL(val) {
+      if (!val && val !== 0) return 'R$ 0,00';
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+    }
+
+    // Format Date ISO
+    function formatDate(isoStr) {
+      if (!isoStr) return '-';
+      try {
+        const d = new Date(isoStr);
+        return d.toLocaleDateString('pt-BR');
+      } catch (e) {
+        return isoStr;
+      }
+    }
+
+    // Form Submission / SSE Streaming
+    const searchForm = document.getElementById('searchForm');
+    const searchSubmitBtn = document.getElementById('searchSubmitBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const progressSection = document.getElementById('progressSection');
+    const resultsSection = document.getElementById('resultsSection');
+
+    searchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      startCapture();
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      if (currentEventSource) {
+        currentEventSource.close();
+        currentEventSource = null;
+        clearInterval(stopwatchInterval);
+        document.getElementById('progressStatusText').textContent = 'Captura interrompida pelo usuário.';
+        resetButtons();
+      }
+    });
+
+    function startCapture() {
+      const q = document.getElementById('queryInput').value.trim();
+      if (!q) return;
+
+      const dateStart = document.getElementById('dateStart').value;
+      const dateEnd = document.getElementById('dateEnd').value;
+      const uf = document.getElementById('ufSelect').value;
+      const esfera = document.getElementById('esferaSelect').value;
+      const maxRecords = document.getElementById('maxRecordsSelect').value;
+      const status = document.getElementById('statusSelect').value;
+      const includeItems = document.getElementById('includeItemsCheckbox').checked;
+
+      // Reset state & UI
+      if (currentEventSource) currentEventSource.close();
+      logConsole.innerHTML = '';
+      progressSection.classList.remove('hidden');
+      resultsSection.classList.add('hidden');
+      searchSubmitBtn.classList.add('hidden');
+      cancelBtn.classList.remove('hidden');
+
+      document.getElementById('progressBar').style.width = '0%';
+      document.getElementById('percentProgress').textContent = '0%';
+      document.getElementById('counterProgress').textContent = 'Iniciando...';
+      document.getElementById('progressStatusText').textContent = 'Conectando à API do PNCP...';
+
+      searchStartTime = Date.now();
+      clearInterval(stopwatchInterval);
+      stopwatchInterval = setInterval(() => {
+        const elapsedSec = Math.floor((Date.now() - searchStartTime) / 1000);
+        const mins = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+        const secs = String(elapsedSec % 60).padStart(2, '0');
+        document.getElementById('elapsedDisplay').textContent = `${mins}:${secs}`;
+      }, 500);
+
+      const params = new URLSearchParams({
+        q: q,
+        data_inicio: dateStart,
+        data_fim: dateEnd,
+        uf: uf,
+        esfera: esfera,
+        max_records: maxRecords,
+        status: status,
+        incluir_itens: includeItems ? 'true' : 'false'
+      });
+
+      addLog(`Disparando busca: q="${q}", uf="${uf}", esfera="${esfera}"`, 'info');
+      currentEventSource = new EventSource(`/api/stream?${params.toString()}`);
+
+      currentEventSource.addEventListener('log', (e) => {
+        const data = JSON.parse(e.data);
+        addLog(data.message, data.level);
+      });
+
+      currentEventSource.addEventListener('start', (e) => {
+        const data = JSON.parse(e.data);
+        addLog(`Total identificado na base: ${data.total_encontrado} editais (Alvo: ${data.total_alvo})`, 'info');
+        document.getElementById('counterProgress').textContent = `Coletados: 0 / ${data.total_alvo}`;
+      });
+
+      currentEventSource.addEventListener('progress', (e) => {
+        const data = JSON.parse(e.data);
+        const pct = Math.min(100, Math.max(0, data.percentual));
+        document.getElementById('progressBar').style.width = `${pct}%`;
+        document.getElementById('percentProgress').textContent = `${pct}%`;
+        document.getElementById('counterProgress').textContent = `Coletados: ${data.coletados.toLocaleString()} / ${data.total_alvo.toLocaleString()}`;
+        document.getElementById('speedDisplay').textContent = `${data.speed_items_per_sec} editais/s`;
+        
+        if (data.eta_seconds > 0) {
+          document.getElementById('etaDisplay').textContent = `~${Math.ceil(data.eta_seconds)}s`;
+        } else {
+          document.getElementById('etaDisplay').textContent = 'Concluindo...';
+        }
+        document.getElementById('progressStatusText').textContent = `Baixando página ${data.pagina} (${data.batch_size} editais neste lote)...`;
+      });
+
+      currentEventSource.addEventListener('item_progress', (e) => {
+        const data = JSON.parse(e.data);
+        document.getElementById('progressStatusText').textContent = `Extraindo itens detalhados: ${data.detalhados} de ${data.total} editais...`;
+      });
+
+      currentEventSource.addEventListener('done', (e) => {
+        const data = JSON.parse(e.data);
+        currentCacheId = data.cache_id;
+        clearInterval(stopwatchInterval);
+        currentEventSource.close();
+        currentEventSource = null;
+
+        document.getElementById('progressBar').style.width = '100%';
+        document.getElementById('percentProgress').textContent = '100%';
+        document.getElementById('progressStatusText').textContent = 'Captura concluída com sucesso!';
+        addLog(`Captura finalizada: ${data.summary.total_coletado} editais coletados em ${data.summary.tempo_total_segundos}s`, 'info');
+
+        resetButtons();
+        fetchFullResults(currentCacheId, data.summary);
+      });
+
+      currentEventSource.addEventListener('error', (e) => {
+        let msg = 'Erro na conexão com o servidor de busca.';
+        try {
+          if (e.data) msg = JSON.parse(e.data).message;
+        } catch (_) {}
+        addLog(msg, 'error');
+        document.getElementById('progressStatusText').textContent = msg;
+        clearInterval(stopwatchInterval);
+        if (currentEventSource) currentEventSource.close();
+        currentEventSource = null;
+        resetButtons();
+      });
+    }
+
+    function resetButtons() {
+      searchSubmitBtn.classList.remove('hidden');
+      cancelBtn.classList.add('hidden');
+    }
+
+    // Carregar Resultados Completos do Backend
+    async function fetchFullResults(cacheId, summary) {
+      try {
+        const res = await fetch(`/api/results?id=${cacheId}`);
+        const data = await res.json();
+        allDatasetItems = data.items || [];
+        filteredTableItems = [...allDatasetItems];
+        
+        displaySummary(summary, data.items.length);
+        renderCharts(summary);
+        renderTablePage(1);
+
+        // Configurar botões de download
+        document.getElementById('btnDownloadJson').href = `/api/export/json?id=${cacheId}`;
+        document.getElementById('btnDownloadCsv').href = `/api/export/csv?id=${cacheId}`;
+
+        resultsSection.classList.remove('hidden');
+        resultsSection.scrollIntoView({ behavior: 'smooth' });
+        lucide.createIcons();
+      } catch (err) {
+        addLog(`Erro ao carregar dados: ${err}`, 'error');
+      }
+    }
+
+    function displaySummary(summary, count) {
+      document.getElementById('statTotal').textContent = count.toLocaleString();
+      document.getElementById('statSubTotal').textContent = `${((count / (summary.total_disponivel || count)) * 100).toFixed(0)}% do total do PNCP`;
+      document.getElementById('statValor').textContent = formatBRL(summary.valor_total_estimado);
+      document.getElementById('statTempo').textContent = `${summary.tempo_total_segundos}s`;
+      document.getElementById('statSpeed').textContent = `${summary.velocidade_media} editais/s média`;
+      document.getElementById('statUfs').textContent = Object.keys(summary.ufs_top || {}).length || '-';
+    }
+
+    // Gráficos Chart.js
+    function renderCharts(summary) {
+      if (!summary) return;
+      const isDark = document.documentElement.classList.contains('dark');
+      const textColor = isDark ? '#94a3b8' : '#475569';
+      const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+      // 1. Esferas Donut
+      const esferaCtx = document.getElementById('esferaChart').getContext('2d');
+      if (esferaChart) esferaChart.destroy();
+      const esferasData = summary.esferas || {};
+      esferaChart = new Chart(esferaCtx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(esferasData),
+          datasets: [{
+            data: Object.values(esferasData),
+            backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Inter', size: 11 } } }
+          }
+        }
+      });
+
+      // 2. Top UFs Bar
+      const ufsCtx = document.getElementById('ufsChart').getContext('2d');
+      if (ufsChart) ufsChart.destroy();
+      const ufsData = summary.ufs_top || [];
+      ufsChart = new Chart(ufsCtx, {
+        type: 'bar',
+        data: {
+          labels: ufsData.map(u => u[0]),
+          datasets: [{
+            label: 'Editais',
+            data: ufsData.map(u => u[1]),
+            backgroundColor: '#3b82f6',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: textColor }, grid: { display: false } },
+            y: { ticks: { color: textColor }, grid: { color: gridColor } }
+          }
+        }
+      });
+    }
+
+    // Tabela e Paginação
+    const tableBody = document.getElementById('tableBody');
+    const tableFilterInput = document.getElementById('tableFilterInput');
+
+    tableFilterInput.addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      filteredTableItems = allDatasetItems.filter(item => {
+        const text = `${item.title} ${item.orgao_nome} ${item.description} ${item.municipio_nome} ${item.uf}`.toLowerCase();
+        return text.includes(term);
+      });
+      renderTablePage(1);
+    });
+
+    document.getElementById('tablePrevBtn').addEventListener('click', () => {
+      if (tableCurrentPage > 1) renderTablePage(tableCurrentPage - 1);
+    });
+    document.getElementById('tableNextBtn').addEventListener('click', () => {
+      const maxPages = Math.ceil(filteredTableItems.length / tablePageSize);
+      if (tableCurrentPage < maxPages) renderTablePage(tableCurrentPage + 1);
+    });
+
+    function renderTablePage(page) {
+      tableCurrentPage = page;
+      tableBody.innerHTML = '';
+      const total = filteredTableItems.length;
+      const start = (page - 1) * tablePageSize;
+      const end = Math.min(start + tablePageSize, total);
+      const itemsSlice = filteredTableItems.slice(start, end);
+
+      document.getElementById('tableShowingText').textContent = `Mostrando ${total === 0 ? 0 : start + 1} a ${end} de ${total.toLocaleString()} editais`;
+      document.getElementById('tablePageText').textContent = `Pág. ${page} de ${Math.max(1, Math.ceil(total / tablePageSize))}`;
+      document.getElementById('tablePrevBtn').disabled = (page <= 1);
+      document.getElementById('tableNextBtn').disabled = (end >= total);
+
+      if (itemsSlice.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">Nenhum edital encontrado com o filtro atual.</td></tr>`;
+        return;
+      }
+
+      itemsSlice.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/40 transition';
+
+        let badgeColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+        if (item.esfera_nome === 'Federal') badgeColor = 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300';
+        if (item.esfera_nome === 'Estadual') badgeColor = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+        if (item.esfera_nome === 'Municipal') badgeColor = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+
+        const objTruncated = (item.description || item.title || '').substring(0, 95);
+        const hasMore = (item.description || '').length > 95;
+
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-mono text-[11px] text-slate-500 whitespace-nowrap">${formatDate(item.data_publicacao_pncp)}</td>
+          <td class="py-3 px-4">
+            <div class="font-semibold text-slate-900 dark:text-white">${item.orgao_nome || 'Órgão não identificado'}</div>
+            <div class="text-[11px] text-slate-400">${item.municipio_nome || '-'} / ${item.uf || '-'}</div>
+          </td>
+          <td class="py-3 px-4 whitespace-nowrap">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${badgeColor}">${item.esfera_nome || 'Outra'}</span>
+          </td>
+          <td class="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">${item.modalidade_licitacao_nome || '-'}</td>
+          <td class="py-3 px-4 text-slate-600 dark:text-slate-300 max-w-xs">
+            <p class="line-clamp-2">${objTruncated}${hasMore ? '...' : ''}</p>
+            ${hasMore ? `<button class="text-emerald-600 dark:text-emerald-400 font-semibold text-[11px] hover:underline btn-ver-mais" data-title="${encodeURIComponent(item.title || '')}" data-text="${encodeURIComponent(item.description || '')}">Ler mais</button>` : ''}
+          </td>
+          <td class="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap">${formatBRL(item.valor_total_estimado)}</td>
+          <td class="py-3 px-4 text-center whitespace-nowrap space-x-1">
+            <button class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 btn-ver-itens" title="Ver itens desta compra" data-cnpj="${item.orgao_cnpj}" data-ano="${item.ano}" data-seq="${item.numero_sequencial}" data-title="${encodeURIComponent(item.title || '')}">
+              <i data-lucide="package" class="w-4 h-4"></i>
+            </button>
+            <button class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/60 btn-ver-arquivos" title="Ver arquivos / PDFs" data-cnpj="${item.orgao_cnpj}" data-ano="${item.ano}" data-seq="${item.numero_sequencial}" data-title="${encodeURIComponent(item.title || '')}">
+              <i data-lucide="paperclip" class="w-4 h-4"></i>
+            </button>
+            ${item.link_sistema_origem && item.link_sistema_origem.startsWith('http') ? `
+              <a href="${item.link_sistema_origem}" target="_blank" rel="noopener noreferrer" class="p-1.5 inline-block rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" title="Abrir link original">
+                <i data-lucide="external-link" class="w-4 h-4"></i>
+              </a>` : ''}
+          </td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      // Bind dynamic actions
+      document.querySelectorAll('.btn-ver-mais').forEach(b => {
+        b.addEventListener('click', () => {
+          document.getElementById('modalObjetoTitulo').textContent = decodeURIComponent(b.dataset.title);
+          document.getElementById('modalObjetoTexto').textContent = decodeURIComponent(b.dataset.text);
+          openModal('modalObjeto');
+          lucide.createIcons();
+        });
+      });
+
+      document.querySelectorAll('.btn-ver-itens').forEach(b => {
+        b.addEventListener('click', () => {
+          carregarItensEdital(b.dataset.cnpj, b.dataset.ano, b.dataset.seq, decodeURIComponent(b.dataset.title));
+        });
+      });
+
+      document.querySelectorAll('.btn-ver-arquivos').forEach(b => {
+        b.addEventListener('click', () => {
+          carregarArquivosEdital(b.dataset.cnpj, b.dataset.ano, b.dataset.seq, decodeURIComponent(b.dataset.title));
+        });
+      });
+
+      lucide.createIcons();
+    }
+
+    // Modal Itens Fetcher
+    async function carregarItensEdital(cnpj, ano, seq, title) {
+      document.getElementById('modalItensSubtitle').textContent = `${title} | CNPJ: ${cnpj}`;
+      const content = document.getElementById('modalItensContent');
+      content.innerHTML = `<div class="flex items-center justify-center py-12 text-slate-400"><i data-lucide="loader-2" class="w-8 h-8 animate-spin"></i></div>`;
+      openModal('modalItens');
+      lucide.createIcons();
+
+      try {
+        const res = await fetch(`/api/edital/itens?cnpj=${cnpj}&ano=${ano}&sequencial=${seq}`);
+        const itens = await res.json();
+        
+        if (!Array.isArray(itens) || itens.length === 0) {
+          content.innerHTML = `<p class="py-8 text-center text-slate-400 text-xs">Nenhum item individual cadastrado neste edital.</p>`;
+          return;
+        }
+
+        let html = `
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-slate-50 dark:bg-slate-800 text-slate-500 font-semibold border-b border-slate-200 dark:border-slate-700">
+                  <th class="py-2.5 px-3">Item</th>
+                  <th class="py-2.5 px-3">Descrição</th>
+                  <th class="py-2.5 px-3">Tipo</th>
+                  <th class="py-2.5 px-3">Qtd.</th>
+                  <th class="py-2.5 px-3">Valor Unit.</th>
+                  <th class="py-2.5 px-3">Valor Total</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        `;
+
+        itens.forEach(it => {
+          html += `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+              <td class="py-2 px-3 font-mono font-bold">${it.numeroItem || '-'}</td>
+              <td class="py-2 px-3">
+                <div class="font-medium text-slate-900 dark:text-white">${it.descricao || '-'}</div>
+                ${it.informacaoComplementar ? `<div class="text-[11px] text-slate-400 mt-0.5">${it.informacaoComplementar}</div>` : ''}
+              </td>
+              <td class="py-2 px-3 text-slate-500">${it.materialOuServicoNome || '-'}</td>
+              <td class="py-2 px-3 font-mono">${it.quantidade || 1} ${it.unidadeMedida || ''}</td>
+              <td class="py-2 px-3 font-mono">${formatBRL(it.valorUnitarioEstimado)}</td>
+              <td class="py-2 px-3 font-mono font-bold text-emerald-600">${formatBRL(it.valorTotal)}</td>
+            </tr>
+          `;
+        });
+
+        html += `</tbody></table></div>`;
+        content.innerHTML = html;
+      } catch (err) {
+        content.innerHTML = `<p class="py-8 text-center text-rose-500 text-xs">Erro ao consultar itens: ${err.message}</p>`;
+      }
+    }
+
+    // Modal Arquivos Fetcher
+    async function carregarArquivosEdital(cnpj, ano, seq, title) {
+      document.getElementById('modalArquivosSubtitle').textContent = `${title} | CNPJ: ${cnpj}`;
+      const content = document.getElementById('modalArquivosContent');
+      content.innerHTML = `<div class="flex items-center justify-center py-12 text-slate-400"><i data-lucide="loader-2" class="w-8 h-8 animate-spin"></i></div>`;
+      openModal('modalArquivos');
+      lucide.createIcons();
+
+      try {
+        const res = await fetch(`/api/edital/arquivos?cnpj=${cnpj}&ano=${ano}&sequencial=${seq}`);
+        const arquivos = await res.json();
+        
+        if (!Array.isArray(arquivos) || arquivos.length === 0) {
+          content.innerHTML = `<p class="py-8 text-center text-slate-400 text-xs">Nenhum anexo público disponibilizado pela API do PNCP para esta compra.</p>`;
+          return;
+        }
+
+        let html = `<div class="space-y-2">`;
+        arquivos.forEach(arq => {
+          const downloadUrl = arq.url || arq.uri || '#';
+          html += `
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5 overflow-hidden">
+                <i data-lucide="file-text" class="w-5 h-5 text-blue-500 shrink-0"></i>
+                <div class="overflow-hidden">
+                  <p class="text-xs font-semibold text-slate-900 dark:text-white truncate">${arq.titulo || arq.tipoDocumentoNome || 'Documento'}</p>
+                  <p class="text-[10px] text-slate-400 truncate">${formatDate(arq.dataPublicacaoPncp)}</p>
+                </div>
+              </div>
+              <a href="${downloadUrl}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs flex items-center gap-1 shrink-0 transition">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>Download</span>
+              </a>
+            </div>
+          `;
+        });
+        html += `</div>`;
+        content.innerHTML = html;
+        lucide.createIcons();
+      } catch (err) {
+        content.innerHTML = `<p class="py-8 text-center text-rose-500 text-xs">Erro ao consultar arquivos: ${err.message}</p>`;
+      }
+    }
+  </script>
+</body>
+</html>
